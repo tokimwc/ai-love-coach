@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import Link from 'next/link'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -42,6 +43,9 @@ export default function Login() {
           required
         />
         <Button type="submit" className="w-full">Login</Button>
+        <div className="mt-4 text-center">
+          <p>アカウントをお持ちでない方は <Link href="/signup" className="text-blue-500 hover:underline">サインアップ</Link></p>
+        </div>
       </form>
     </div>
   )
