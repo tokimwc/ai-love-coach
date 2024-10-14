@@ -1,10 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  eslint: {
-    ignoreDuringBuilds: true,
+  reactStrictMode: true,
+  webpack: (config) => {
+    config.externals = [...config.externals, { canvas: 'canvas' }];
+    return config;
   },
-  images: { unoptimized: true },
+  // framer-motionのトランスパイルを有効にする
+  transpilePackages: ['framer-motion'],
 };
 
 module.exports = nextConfig;
