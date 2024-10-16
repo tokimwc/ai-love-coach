@@ -19,14 +19,28 @@ export default function Signup() {
       alert('パスワードが一致しません。')
       return
     }
+    if (password.length < 6) {
+      alert('パスワードは6文字以上である必要があります。')
+      return
+    }
     try {
-      const { error } = await supabase.auth.signUp({ email, password })
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
       if (error) throw error
-      alert('サインアップ成功！確認メールを確認してください。')
-      router.push('/login')
-    } catch (error) {
+      if (data.user) {
+        alert('サインアップ成功！確認メールを確認してください。数分かかる場合があります。')
+        router.push('/login')
+      } else {
+        alert('サインアップに失敗しました。もう一度お試しください。')
+      }
+    } catch (error: any) {
       console.error('サインアップエラー:', error)
-      alert('サインアップエラー。もう一度お試しください。')
+      alert(`サインアップエラー: ${error.message || '不明なエラーが発生しました。'}`)
     }
   }
 
