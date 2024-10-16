@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import Link from 'next/link'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -17,34 +16,41 @@ export default function Login() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
-      router.push('/chat')
+      router.push('/')
     } catch (error) {
       console.error('Error logging in:', error)
-      alert('Error logging in. Please try again.')
+      alert('ログイン中にエラーが発生しました。もう一度お試しください。')
     }
+  }
+
+  const handleSignupClick = () => {
+    router.push('/signup')
   }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <form onSubmit={handleLogin} className="space-y-4 w-full max-w-md p-8 bg-card rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-center">Login</h1>
+        <h1 className="text-2xl font-bold text-center">ログイン</h1>
         <Input
           type="email"
-          placeholder="Email"
+          placeholder="メールアドレス"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <Input
           type="password"
-          placeholder="Password"
+          placeholder="パスワード"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <Button type="submit" className="w-full">Login</Button>
+        <Button type="submit" className="w-full">ログイン</Button>
         <div className="mt-4 text-center">
-          <p>アカウントをお持ちでない方は <Link href="/signup" className="text-blue-500 hover:underline">サインアップ</Link></p>
+          <p>
+            アカウントをお持ちでない方は{' '}
+            <Button variant="link" onClick={handleSignupClick}>サインアップ</Button>
+          </p>
         </div>
       </form>
     </div>

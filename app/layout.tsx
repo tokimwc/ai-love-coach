@@ -3,6 +3,8 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { ThemeProvider } from "@/components/theme-provider"
 import Layout from "@/components/Layout"
+import ClientNavigation from "@/components/ClientNavigation"
+import { AuthProvider } from '@/contexts/AuthContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -25,7 +27,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Layout>{children}</Layout>
+          <AuthProvider>
+            <ClientNavigation />
+            <Layout>
+              {children}
+            </Layout>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
