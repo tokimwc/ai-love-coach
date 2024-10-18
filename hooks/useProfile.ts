@@ -1,17 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { createClient } from "@supabase/supabase-js"
+import { supabase } from '../lib/supabase'
+import { Database } from '../types/supabase'
 
-const supabase = createClient("YOUR_SUPABASE_URL", "YOUR_SUPABASE_ANON_KEY")
-
-interface Profile {
-  id: string
-  name: string
-  age: number
-  gender: string
-  bio: string
-}
+// ここでProfileの型を定義
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 export function useProfile() {
   const [profile, setProfile] = useState<Profile>({

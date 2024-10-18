@@ -6,25 +6,55 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
-      [_ in never]: never;
-    };
+      profiles: {
+        Row: {
+          id: string
+          name: string
+          age: number
+          gender: string
+          bio: string
+        }
+        Insert: {
+          id?: string
+          name?: string
+          age?: number
+          gender?: string
+          bio?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          age?: number
+          gender?: string
+          bio?: string
+        }
+      }
+      // 他のテーブルがあればここに追加
+      conversations: {
+        Row: {
+          id: string
+          user_id: string
+          messages: Json
+        }
+      }
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Enums: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
-};
+      [_ in never]: never
+    }
+  }
+}
 
 type PublicSchema = Database[Extract<keyof Database, "public">];
 
@@ -123,4 +153,4 @@ export type CompositeTypes<
     ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never;
 
-// Schema: public
+

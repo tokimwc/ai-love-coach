@@ -3,58 +3,97 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send } from "lucide-react"
+import { Card } from "@/components/ui/card"
 import ChatMessage from "@/components/ChatMessage"
-import VoiceInput from "@/components/VoiceInput"
-import { useChat } from "@/hooks/useChat"
+
+interface Message {
+  role: 'user' | 'assistant'
+  content: string
+}
 
 export default function ChatPage() {
-  const [input, setInput] = useState("")
-  const { messages, sendMessage, isLoading } = useChat()
-  const [emotion, setEmotion] = useState<string | null>(null)
+  const [message, setMessage] = useState("")
+  const [conversation, setConversation] = useState<Message[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [conversationId, setConversationId] = useState<string | null>(null)
 
-  const handleSend = () => {
-    if (input.trim()) {
-      sendMessage(input)
-      setInput("")
+  const sendMessage = async () => {
+    if (!message.trim()) return
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, conversationId }),
+      })
+
+      if (!response.ok) {
+        throw new Error('ネットワークエラーが発生しました')
+      }
+
+      const data = await response.json()
+      console.log('API Response:', data);
+
+      if (data.error) {
+        throw new Error(data.error)
+      }
+
+      setConversation(prev => [
+        ...prev, 
+        { role: 'user', content: message }, 
+        { role: 'assistant', content: data.response }
+      ])
+      setConversationId(data.conversationId)
+      setMessage('')
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message)
+      } else {
+        setError('不明なエラーが発生しました')
+      }
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleVoiceTranscript = (transcript: string) => {
-    setInput(transcript)
-  }
-
-  const handleEmotion = (detectedEmotion: string) => {
-    setEmotion(detectedEmotion)
-  }
-
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <header className="p-4 border-b">
-        <h1 className="text-2xl font-bold">AI Love Coach</h1>
-        {emotion && (
-          <p className="text-sm text-muted-foreground">Detected emotion: {emotion}</p>
-        )}
-      </header>
-      <ScrollArea className="flex-grow p-4">
-        {messages.map((message, index) => (
-          <ChatMessage key={index} message={message} />
-        ))}
-      </ScrollArea>
-      <div className="p-4 border-t">
-        <div className="flex space-x-2 mb-2">
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            onKeyPress={(e) => e.key === "Enter" && handleSend()}
-          />
-          <Button onClick={handleSend} disabled={isLoading}>
-            <Send className="h-4 w-4" />
-          </Button>
+    <div className="container mx-auto p-4">
+      <Card className="mb-4 p-4">
+        <div className="space-y-4">
+          {conversation.map((msg, index) => (
+            <ChatMessage key={index} message={msg} />
+          ))}
         </div>
-        <VoiceInput onTranscript={handleVoiceTranscript} onEmotion={handleEmotion} />
+      </Card>
+      {isLoading && <div className="text-center">応答を待っています...</div>}
+      {error && <div className="text-red-500 text-center">{error}</div>}
+      <div className="flex space-x-2">
+        <Input
+          type="text"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="メッセージを入力..."
+          disabled={isLoading}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              if (e.shiftKey) {
+                // 改行
+                setMessage(prev => prev + '\n')
+              } else {
+                // 送信
+                sendMessage()
+              }
+              e.preventDefault()
+            }
+          }}
+        />
+        <Button onClick={sendMessage} disabled={isLoading}>
+          送信
+        </Button>
       </div>
     </div>
   )
