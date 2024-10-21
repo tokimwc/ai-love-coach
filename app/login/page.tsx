@@ -12,16 +12,20 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      console.log('ログイン試行中:', email)
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      console.log('ログイン結果:', data, error)
       if (error) throw error
       router.push('/')
     } catch (error) {
-      console.error('Error logging in:', error)
-      alert('ログイン中にエラーが発生しました。もう一度お試しください。')
+      console.error('ログインエラー:', error)
+      setError('ログイン中にエラーが発生しました。もう一度お試しください。')
     }
   }
 
@@ -47,6 +51,7 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+        {error && <p className="text-red-500 text-sm">{error}</p>}
         <Button type="submit" className="w-full">ログイン</Button>
         <div className="mt-4 text-center">
           <p>
