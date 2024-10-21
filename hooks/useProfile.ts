@@ -1,55 +1,81 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { supabase } from '../lib/supabase'
-import { Database } from '../types/supabase'
+import { useState, useEffect, useCallback } from "react"
+import { createClient } from '@/lib/supabase'
 
-// ここでProfileの型を定義
-type Profile = Database['public']['Tables']['profiles']['Row']
+interface Profile {
+  id: string;
+  name: string;
+  age: number;
+  gender: string;
+  bio: string;
+}
 
 export function useProfile() {
-  const [profile, setProfile] = useState<Profile>({
-    id: "",
-    name: "",
-    age: 0,
-    gender: "",
-    bio: "",
-  })
-  const [isLoading, setIsLoading] = useState(false)
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isInitialProfile, setIsInitialProfile] = useState(false)
+  const supabase = createClient()
+
+  const fetchProfile = useCallback(async () => {
+    setIsLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // プロフィールが見つからない場合、初回プロフィール作成とみなす
+          setIsInitialProfile(true)
+          setProfile(null)
+        } else {
+          console.error('プロフィールの取得中にエラーが発生しました:', error)
+          setProfile(null)
+        }
+      } else {
+        setProfile(data)
+        setIsInitialProfile(false)
+      }
+    }
+    setIsLoading(false)
+  }, [supabase])
 
   useEffect(() => {
     fetchProfile()
-  }, [])
+  }, [fetchProfile])
 
-  const fetchProfile = async () => {
+  const updateProfile = useCallback(async (updatedProfile: Omit<Profile, 'id'>): Promise<{ success: boolean; message: string }> => {
     setIsLoading(true)
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .single()
-
-    if (error) {
-      console.error("Error fetching profile:", error)
-    } else if (data) {
-      setProfile(data)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setIsLoading(false)
+      return { success: false, message: 'ユーザーが認証されていません。' }
     }
-    setIsLoading(false)
-  }
 
-  const updateProfile = async (updatedProfile: Partial<Profile>) => {
-    setIsLoading(true)
-    const { error } = await supabase
-      .from("profiles")
-      .update(updatedProfile)
-      .eq("id", profile.id)
+    const profileData = { ...updatedProfile, id: user.id }
 
-    if (error) {
-      console.error("Error updating profile:", error)
+    let result
+    if (isInitialProfile) {
+      result = await supabase.from('profiles').insert([profileData])
     } else {
-      setProfile((prev) => ({ ...prev, ...updatedProfile }))
+      result = await supabase.from('profiles').update(profileData).eq('id', user.id)
     }
-    setIsLoading(false)
-  }
 
-  return { profile, updateProfile, isLoading }
+    if (result.error) {
+      console.error('プロフィールの更新中にエラーが発生しました:', result.error)
+      setIsLoading(false)
+      return { success: false, message: 'プロフィールの更新に失敗しました。' }
+    } else {
+      setProfile(profileData as Profile)
+      setIsInitialProfile(false)
+      setIsLoading(false)
+      return { success: true, message: 'プロフィールが正常に更新されました。' }
+    }
+  }, [supabase, isInitialProfile])
+
+  return { profile, updateProfile, isLoading, fetchProfile, isInitialProfile }
 }

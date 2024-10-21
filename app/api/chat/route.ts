@@ -1,9 +1,19 @@
+import { createClient } from '@/app/utils/supabase/server'  // clientからserverに変更
+import { cookies } from 'next/headers'
 import { NextResponse } from "next/server"
 
 const DIFY_API_KEY = process.env.DIFY_API_KEY!
 const DIFY_API_URL = 'https://api.dify.ai/v1'
 
 export async function POST(request: Request) {
+  const cookieStore = cookies()
+  const supabase = createClient(cookieStore) 
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const { message, conversationId } = await request.json()
 
   try {

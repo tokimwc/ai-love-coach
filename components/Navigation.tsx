@@ -3,13 +3,31 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { supabase } from '@/lib/supabase'
 import { Heart } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/app/utils/supabase/client'
+import { Session } from '@supabase/supabase-js'
 
 export default function Navigation() {
   const router = useRouter()
   const { user } = useAuth()
+  const [session, setSession] = useState<Session | null>(null)
+  const supabase = createClient()
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [supabase.auth])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()

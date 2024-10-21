@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase' 
 import { Heart } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 

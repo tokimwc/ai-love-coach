@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
         get(name: string) {
           return request.cookies.get(name)?.value
         },
-        set(name: string, value: string, options: CookieOptions) {
+        set(name: string, value: string, options: any) {
           request.cookies.set({
             name,
             value,
@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
             ...options,
           })
         },
-        remove(name: string, options: CookieOptions) {
+        remove(name: string, options: any) {
           request.cookies.set({
             name,
             value: '',
@@ -55,15 +55,11 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { session } } = await supabase.auth.getSession()
-
-  if (!session && request.nextUrl.pathname.startsWith('/dashboard')) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
+  await supabase.auth.getSession()
 
   return response
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 }

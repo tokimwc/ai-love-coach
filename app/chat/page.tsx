@@ -1,22 +1,39 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import ChatMessage from "@/components/ChatMessage"
+import { createBrowserClient } from '@supabase/ssr'
+import { useRouter } from 'next/navigation'
 
 interface Message {
   role: 'user' | 'assistant'
   content: string
 }
 
-export default function ChatPage() {
+export default function Chat() {
   const [message, setMessage] = useState("")
   const [conversation, setConversation] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [conversationId, setConversationId] = useState<string | null>(null)
+  const router = useRouter()
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login')
+      }
+    }
+    checkSession()
+  }, [supabase, router])
 
   const sendMessage = async () => {
     if (!message.trim()) return

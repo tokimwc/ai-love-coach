@@ -1,18 +1,21 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState } from 'react'
+import { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/app/utils/supabase/client'
 
-const AuthContext = createContext<{ user: any | null; loading: boolean }>({
-  user: null,
-  loading: true,
-})
+type AuthContextType = {
+  user: User | null
+  signOut: () => Promise<void>
+}
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any | null>(null)
-  const [loading, setLoading] = useState(true)
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
+  const supabase = createClient()
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -23,21 +26,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } else {
         setUser(null)
-        if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
-          router.push('/login')
-        }
+        router.push('/login')
       }
-      setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
-  }, [router])
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [router, supabase.auth])
+
+  const signOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ user, signOut }}>
+      {children}
     </AuthContext.Provider>
   )
 }
 
-export const useAuth = () => useContext(AuthContext)
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
+}
