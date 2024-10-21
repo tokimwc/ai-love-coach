@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { User } from '@supabase/supabase-js'
+import { User, Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/app/utils/supabase/client'
 
@@ -12,8 +12,13 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+type AuthProviderProps = {
+  children: React.ReactNode
+  initialSession: Session | null
+}
+
+export function AuthProvider({ children, initialSession }: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(initialSession?.user || null)
   const router = useRouter()
   const supabase = createClient()
 

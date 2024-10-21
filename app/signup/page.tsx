@@ -7,7 +7,7 @@ import { createClient } from '@/app/utils/supabase/client'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SignUpPage() {
   const supabase = createClient()
@@ -16,7 +16,7 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const { addToast } = useToast()
+  const { toast } = useToast() 
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -28,6 +28,7 @@ export default function SignUpPage() {
     }
 
     try {
+      console.log("サインアップ処理開始");
       const { error } = await supabase.auth.signUp({ 
         email, 
         password,
@@ -37,12 +38,14 @@ export default function SignUpPage() {
       })
       if (error) throw error
       
-      addToast({
+      console.log("サインアップ成功");
+      toast({
         title: "確認メールを送信しました",
         description: "メールを確認して、アカウントを有効化してください。",
       })
       
-      router.push('/login')
+      // トーストが表示される時間を確保するため、遅延を長くします
+      setTimeout(() => router.push('/login'), 3000)
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message)

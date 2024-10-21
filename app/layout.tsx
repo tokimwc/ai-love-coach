@@ -28,7 +28,7 @@ export default async function RootLayout({
   } = await supabase.auth.getSession()
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
@@ -36,7 +36,7 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
+          <AuthProvider initialSession={session}>
             <ClientNavigation />
             <Layout>
               {children}
