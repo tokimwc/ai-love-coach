@@ -55,10 +55,36 @@ export default function ProfilePage() {
     if (updateProfile) {
       const result = await updateProfile(formData);
       if (result.success) {
+        // Dify APIへの送信を追加
+        try {
+          const response = await fetch('/api/sendProfileToDify', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+          });
+
+          if (!response.ok) {
+            throw new Error('Dify API エラー');
+          }
+
+          const data = await response.json();
+          console.log('Dify APIからのレスポンス:', data);
+        } catch (error) {
+          toast({
+            title: "エラー",
+            description: "Dify APIへの送信に失敗しました。",
+            variant: "destructive",
+          })
+          return;
+        }
+
         toast({
           title: "成功",
           description: result.message,
         })
+        // 必要に応じてリダイレクトなどの処理を追加
       } else {
         toast({
           title: "エラー",

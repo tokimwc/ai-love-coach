@@ -1,3 +1,26 @@
+class Complex {
+  constructor(public real: number, public imag: number) {}
+
+  multiply(other: Complex): Complex {
+    return new Complex(
+      this.real * other.real - this.imag * other.imag,
+      this.real * other.imag + this.imag * other.real
+    );
+  }
+
+  add(other: Complex): Complex {
+    return new Complex(this.real + other.real, this.imag + other.imag);
+  }
+
+  subtract(other: Complex): Complex {
+    return new Complex(this.real - other.real, this.imag - other.imag);
+  }
+
+  magnitude(): number {
+    return Math.sqrt(this.real * this.real + this.imag * this.imag);
+  }
+}
+
 export class AudioProcessor {
   private sampleRate: number;
   private fftSize: number;
@@ -12,32 +35,44 @@ export class AudioProcessor {
     const n = signal.length;
     if (n <= 1) return signal;
 
-    const even = this.fft(signal.filter((_, i) => i % 2 === 0));
-    const odd = this.fft(signal.filter((_, i) => i % 2 === 1));
+    const evenSignal = signal.filter((_, i) => i % 2 === 0);
+    const oddSignal = signal.filter((_, i) => i % 2 === 1);
+    const even = this.fft(evenSignal);
+    const odd = this.fft(oddSignal);
 
-    const combined = new Float32Array(n);
+    const combined = new Float32Array(n * 2); // 実部と虚部を交互に格納
     for (let k = 0; k < n / 2; k++) {
-      const t = odd[k] * Math.exp(-2 * Math.PI * 1i * k / n);
-      combined[k] = even[k] + t;
-      combined[k + n / 2] = even[k] - t;
+      const kth = k * 2;
+      const t_real = odd[kth] * Math.cos(-2 * Math.PI * k / n) - odd[kth + 1] * Math.sin(-2 * Math.PI * k / n);
+      const t_imag = odd[kth] * Math.sin(-2 * Math.PI * k / n) + odd[kth + 1] * Math.cos(-2 * Math.PI * k / n);
+      combined[kth] = even[kth] + t_real;
+      combined[kth + 1] = even[kth + 1] + t_imag;
+      combined[kth + n] = even[kth] - t_real;
+      combined[kth + n + 1] = even[kth + 1] - t_imag;
     }
 
     return combined;
   }
 
   // 音声データからスペクトログラムを生成
-  generateSpectrogram(audioData: Float32Array): Float32Array[] {
-    const spectrogram: Float32Array[] = [];
+  generateSpectrogram(audioData: Float32Array): number[][] {
+    const spectrogram: number[][] = [];
     for (let i = 0; i < audioData.length; i += this.fftSize) {
       const slice = audioData.slice(i, i + this.fftSize);
-      const spectrum = this.fft(slice);
+      const fftResult = this.fft(slice);
+      const spectrum = new Array(this.fftSize / 2);
+      for (let j = 0; j < this.fftSize / 2; j++) {
+        const real = fftResult[j * 2];
+        const imag = fftResult[j * 2 + 1];
+        spectrum[j] = Math.sqrt(real * real + imag * imag);
+      }
       spectrogram.push(spectrum);
     }
     return spectrogram;
   }
 
   // スペクトログラムから簡易的に音素を推定
-  estimatePhonemes(spectrogram: Float32Array[]): string[] {
+  estimatePhonemes(spectrogram: number[][]): string[] {
     // 実際の音素推定はもっと複雑ですが、ここでは簡略化しています
     const phonemes: string[] = [];
     const vowels = ['a', 'i', 'u', 'e', 'o'];
