@@ -47,8 +47,9 @@ export function useVoiceInput({ onTranscript, onEmotion }: UseVoiceInputProps) {
           formData.append('model', 'whisper-1')
 
           try {
+            const audioFile = new File([audioBlob], 'audio.webm', { type: audioBlob.type });
             const response = await openai.audio.transcriptions.create({
-              file: audioBlob,
+              file: audioFile,
               model: 'whisper-1',
             })
 

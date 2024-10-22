@@ -3,7 +3,7 @@ import type { AppProps } from 'next/app'
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <AuthProvider>
+    <AuthProvider initialSession={pageProps.initialSession}>
       <Component {...pageProps} />
     </AuthProvider>
   )
