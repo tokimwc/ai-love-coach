@@ -13,6 +13,11 @@ interface Message {
   content: string
 }
 
+interface SuggestionButton {
+  text: string;
+  message: string;
+}
+
 export default function Chat() {
   const [message, setMessage] = useState("")
   const [conversation, setConversation] = useState<Message[]>([])
@@ -24,6 +29,22 @@ export default function Chat() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
+  const [showWelcome, setShowWelcome] = useState(true)
+
+  const initialSuggestions: SuggestionButton[] = [
+    {
+      text: "恋愛相談をしたい",
+      message: "恋愛について相談があります。アドバイスをお願いできますか？"
+    },
+    {
+      text: "好きな人へのアプローチ方法",
+      message: "好きな人がいるのですが、どうやってアプローチすればいいですか？"
+    },
+    {
+      text: "デートプランについて",
+      message: "理想的なデートプランを考えたいです。アドバイスをください。"
+    }
+  ]
 
   useEffect(() => {
     const checkSession = async () => {
@@ -77,10 +98,34 @@ export default function Chat() {
     }
   }
 
+  const handleSuggestionClick = (message: string) => {
+    setMessage(message)
+    sendMessage()
+    setShowWelcome(false)
+  }
+
   return (
     <div className="container mx-auto p-4">
       <Card className="mb-4 p-4">
         <div className="space-y-4">
+          {showWelcome && conversation.length === 0 && (
+            <div className="text-center space-y-4">
+              <h2 className="text-xl font-bold">AI恋愛コーチへようこそ！</h2>
+              <p className="text-gray-600">どのようなお悩みでしょうか？</p>
+              <div className="flex flex-col gap-2">
+                {initialSuggestions.map((suggestion, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    className="text-left"
+                    onClick={() => handleSuggestionClick(suggestion.message)}
+                  >
+                    {suggestion.text}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
           {conversation.map((msg, index) => (
             <ChatMessage key={index} message={msg} />
           ))}
