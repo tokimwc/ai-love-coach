@@ -89,11 +89,27 @@ export async function POST(request: Request) {
         throw new Error(`Dify API エラー: ${response.status}`)
       }
 
-      const data = await response.json()
-      return NextResponse.json({ 
-        response: data.answer || data.response, 
-        conversationId: data.conversation_id 
-      })
+      try {
+        const data = await response.json()
+        if (!data || (typeof data !== 'object')) {
+          throw new Error('Invalid response format from Dify API')
+        }
+        
+        // マークダウンはそのまま保持
+        const formattedResponse = data.answer || 
+                                 data.message?.content || 
+                                 "応答を生成できませんでした"
+
+        return NextResponse.json({ 
+          response: formattedResponse,
+          conversationId: data.conversation_id || conversationId
+        })
+      } catch (error) {
+        console.error('Dify応答解析エラー:', error)
+        return NextResponse.json({ 
+          error: 'APIレスポンスの解析に失敗しました'
+        }, { status: 500 })
+      }
     } catch (error: any) {
       return NextResponse.json({ 
         error: 'Dify APIエラー: ' + (error.message || 'APIキーを確認してください') 

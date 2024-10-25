@@ -1,6 +1,8 @@
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Message } from "@/types"
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface ChatMessageProps {
   message: Message
@@ -19,11 +21,11 @@ export default function ChatMessage({ message }: ChatMessageProps) {
       )}
       <div
         className={cn(
-          "max-w-md p-4 rounded-lg",
+          "max-w-md p-4 rounded-lg prose prose-sm dark:prose-invert",
           isUser ? "bg-primary text-primary-foreground" : "bg-muted"
         )}
       >
-        {message.content}
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
       </div>
       {isUser && (
         <Avatar className="ml-2">
