@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useTheme } from "next-themes"
-import { supabase } from '@/lib/supabase'
+import { useRouter } from "next/navigation"
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   Card,
   CardContent,
@@ -19,44 +18,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import Link from "next/link"
 
 export default function Settings() {
-  const [openaiApiKey, setOpenaiApiKey] = useState('')
   const { theme, setTheme } = useTheme()
+  const [selectedService, setSelectedService] = useState<string>('dify')
+  const [openaiKey, setOpenaiKey] = useState<string>('')
+  const [difyKey, setDifyKey] = useState<string>('')
 
+  // セッションストレージからキーを読み込む
   useEffect(() => {
-    fetchApiKey()
+    const storedOpenaiKey = sessionStorage.getItem('openai_api_key')
+    const storedDifyKey = sessionStorage.getItem('dify_api_key')
+    const storedService = sessionStorage.getItem('selected_service')
+    if (storedOpenaiKey) setOpenaiKey(storedOpenaiKey)
+    if (storedDifyKey) setDifyKey(storedDifyKey)
+    if (storedService) setSelectedService(storedService)
   }, [])
 
-  const fetchApiKey = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data, error } = await supabase
-        .from('user_settings')
-        .select('openai_api_key')
-        .eq('user_id', user.id)
-        .single()
-
-      if (data) {
-        setOpenaiApiKey(data.openai_api_key || '')
-      }
+  // キーの保存
+  const handleSaveKeys = () => {
+    sessionStorage.setItem('selected_service', selectedService)
+    if (selectedService === 'openai') {
+      sessionStorage.setItem('openai_api_key', openaiKey)
+    } else {
+      sessionStorage.setItem('dify_api_key', difyKey)
     }
-  }
-
-  const handleSaveApiKey = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { error } = await supabase
-        .from('user_settings')
-        .upsert({ user_id: user.id, openai_api_key: openaiApiKey })
-
-      if (error) {
-        console.error('Error saving API key:', error)
-        alert('APIキーの保存中にエラーが発生しました。')
-      } else {
-        alert('APIキーが正常に保存されました！')
-      }
-    }
+    alert('設定が保存されました')
   }
 
   return (
@@ -86,19 +75,54 @@ export default function Settings() {
 
       <Card>
         <CardHeader>
-          <CardTitle>API設定</CardTitle>
+          <CardTitle>AIサービス設定</CardTitle>
           <CardDescription>
-            OpenAI APIキーを設定してください
+            使用するAIサービスを選択してください
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Input
-            type="password"
-            value={openaiApiKey}
-            onChange={(e) => setOpenaiApiKey(e.target.value)}
-            placeholder="OpenAI APIキーを入力"
-          />
-          <Button onClick={handleSaveApiKey}>APIキーを保存</Button>
+          <Select value={selectedService} onValueChange={setSelectedService}>
+            <SelectTrigger>
+              <SelectValue placeholder="サービスを選択" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="openai">OpenAI</SelectItem>
+              <SelectItem value="dify">Dify</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-red-500 text-sm">
+            注意: ページを更新するか、ログアウトするとデータが消去されます。
+          </p>
+
+          <div className="space-y-4">
+            {selectedService === 'openai' && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">OpenAI APIキー</label>
+                <Input
+                  type="password"
+                  value={openaiKey}
+                  onChange={(e) => setOpenaiKey(e.target.value)}
+                  placeholder="sk-..."
+                />
+              </div>
+            )}
+            
+            {selectedService === 'dify' && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Dify APIキー</label>
+                <Input
+                  type="password"
+                  value={difyKey}
+                  onChange={(e) => setDifyKey(e.target.value)}
+                  placeholder="app-..."
+                />
+              </div>
+            )}
+
+            <Button onClick={handleSaveKeys} className="w-full">
+              設定を保存
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
