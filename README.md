@@ -1,5 +1,7 @@
 # AI Love Coach
 
+[English](./README.md) | [日本語](./README.ja.md)
+
 AI Love Coach is a web application that provides personalized dating advice through an AI chatbot, analyzes user emotions from voice input, and manages user profiles.
 
 ## Features
@@ -35,5 +37,4 @@ This project is designed to be deployed on Vercel. Follow these steps:
 4. Deploy!
 
 ## License
-
 This project is licensed under the MIT License.
