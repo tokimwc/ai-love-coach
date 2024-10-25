@@ -35,6 +35,9 @@ export default function ClientNavigation() {
                 <Link href="/profile" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">
                   プロフィール
                 </Link>
+                <Link href="/settings" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-3 py-2 rounded-md text-sm font-medium">
+                  設定
+                </Link>
                 <Button onClick={handleLogout} variant="ghost" className="ml-4">
                   ログアウト
                 </Button>

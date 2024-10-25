@@ -1,12 +1,28 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { useTheme } from "next-themes"
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export default function Settings() {
   const [openaiApiKey, setOpenaiApiKey] = useState('')
+  const { theme, setTheme } = useTheme()
 
   useEffect(() => {
     fetchApiKey()
@@ -36,31 +52,55 @@ export default function Settings() {
 
       if (error) {
         console.error('Error saving API key:', error)
-        alert('Error saving API key. Please try again.')
+        alert('APIキーの保存中にエラーが発生しました。')
       } else {
-        alert('API key saved successfully!')
+        alert('APIキーが正常に保存されました！')
       }
     }
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Settings</h1>
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="openai-api-key" className="block text-sm font-medium text-gray-700">
-            OpenAI API Key
-          </label>
+    <div className="container mx-auto p-4 space-y-6">
+      <h1 className="text-2xl font-bold mb-6">設定</h1>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>テーマ設定</CardTitle>
+          <CardDescription>
+            アプリケーションの表示モードを選択してください
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Select value={theme} onValueChange={setTheme}>
+            <SelectTrigger>
+              <SelectValue placeholder="テーマを選択" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="light">ライトモード</SelectItem>
+              <SelectItem value="dark">ダークモード</SelectItem>
+              <SelectItem value="system">システム設定に従う</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>API設定</CardTitle>
+          <CardDescription>
+            OpenAI APIキーを設定してください
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <Input
-            id="openai-api-key"
             type="password"
             value={openaiApiKey}
             onChange={(e) => setOpenaiApiKey(e.target.value)}
-            placeholder="Enter your OpenAI API key"
+            placeholder="OpenAI APIキーを入力"
           />
-        </div>
-        <Button onClick={handleSaveApiKey}>Save API Key</Button>
-      </div>
+          <Button onClick={handleSaveApiKey}>APIキーを保存</Button>
+        </CardContent>
+      </Card>
     </div>
   )
 }
