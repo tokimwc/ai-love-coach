@@ -19,12 +19,24 @@ export default function LoginPage() {
     setError(null)
     try {
       console.log('ログイン試行中:', email)
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      console.log('ログイン結果:', data, error)
-      if (error) throw error
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password,
+      })
+      console.log('ログイン詳細:', { data, error })
+      
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          setError('メールアドレスまたはパスワードが正しくありません。')
+        } else {
+          setError(error.message)
+        }
+        return
+      }
+      
       router.push('/')
     } catch (error) {
-      console.error('ログインエラー:', error)
+      console.error('詳細なログインエラー:', error)
       setError('ログイン中にエラーが発生しました。もう一度お試しください。')
     }
   }

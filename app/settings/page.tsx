@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTheme } from "next-themes"
 import { useRouter } from "next/navigation"
 import { Button } from '@/components/ui/button'
+import { createClient } from '@/app/utils/supabase/client'
 import {
   Card,
   CardContent,
@@ -19,31 +20,55 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import Link from "next/link"
 
 export default function Settings() {
   const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const [selectedService, setSelectedService] = useState<string>('dify')
   const [openaiKey, setOpenaiKey] = useState<string>('')
   const [difyKey, setDifyKey] = useState<string>('')
+  const [difyUrl, setDifyUrl] = useState<string>('')
+  const router = useRouter()
+  const supabase = createClient()
 
-  // セッションストレージからキーを読み込む
+  // マウント状態を管理
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login')
+      }
+    }
+    checkSession()
+  }, [supabase, router])
+
   useEffect(() => {
     const storedOpenaiKey = sessionStorage.getItem('openai_api_key')
     const storedDifyKey = sessionStorage.getItem('dify_api_key')
+    const storedDifyUrl = sessionStorage.getItem('dify_api_url')
     const storedService = sessionStorage.getItem('selected_service')
     if (storedOpenaiKey) setOpenaiKey(storedOpenaiKey)
     if (storedDifyKey) setDifyKey(storedDifyKey)
+    if (storedDifyUrl) setDifyUrl(storedDifyUrl)
     if (storedService) setSelectedService(storedService)
   }, [])
 
-  // キーの保存
+  // マウントされていない場合は何も表示しない
+  if (!mounted) {
+    return null
+  }
+
   const handleSaveKeys = () => {
     sessionStorage.setItem('selected_service', selectedService)
     if (selectedService === 'openai') {
       sessionStorage.setItem('openai_api_key', openaiKey)
     } else {
       sessionStorage.setItem('dify_api_key', difyKey)
+      sessionStorage.setItem('dify_api_url', difyUrl || 'https://api.dify.ai/v1')
     }
     alert('設定が保存されました')
   }
@@ -62,7 +87,7 @@ export default function Settings() {
         <CardContent>
           <Select value={theme} onValueChange={setTheme}>
             <SelectTrigger>
-              <SelectValue placeholder="テーマを選択" />
+              <SelectValue defaultValue={theme} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="light">ライトモード</SelectItem>
@@ -108,14 +133,28 @@ export default function Settings() {
             )}
             
             {selectedService === 'dify' && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Dify APIキー</label>
-                <Input
-                  type="password"
-                  value={difyKey}
-                  onChange={(e) => setDifyKey(e.target.value)}
-                  placeholder="app-..."
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Dify APIキー</label>
+                  <Input
+                    type="password"
+                    value={difyKey}
+                    onChange={(e) => setDifyKey(e.target.value)}
+                    placeholder="app-..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Dify API URL</label>
+                  <Input
+                    type="text"
+                    value={difyUrl}
+                    onChange={(e) => setDifyUrl(e.target.value)}
+                    placeholder="https://api.dify.ai/v1"
+                  />
+                  <p className="text-sm text-gray-500">
+                    例: https://api.dify.ai/v1
+                  </p>
+                </div>
               </div>
             )}
 

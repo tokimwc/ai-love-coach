@@ -40,6 +40,20 @@ export interface Database {
           messages: Json
         }
       }
+      user_settings: {
+        Row: {
+          id: string
+          user_id: string
+          ai_service: string
+          openai_key: string | null
+          dify_key: string | null
+          dify_api_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<UserSettings, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<UserSettings, 'id' | 'created_at' | 'updated_at'>>
+      }
     }
     Views: {
       [_ in never]: never
@@ -153,4 +167,13 @@ export type CompositeTypes<
     ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never;
 
-
+export type UserSettings = {
+  id: string
+  user_id: string
+  ai_service: string
+  openai_key: string | null
+  dify_key: string | null
+  dify_api_url: string | null
+  created_at: string
+  updated_at: string
+}

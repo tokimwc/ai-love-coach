@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card"
 import ChatMessage from "@/components/ChatMessage"
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
+import { validateMessage } from "@/app/utils/validation";
 
 interface Message {
   role: 'user' | 'assistant'
@@ -57,46 +58,47 @@ export default function Chat() {
   }, [supabase, router])
 
   const sendMessage = async () => {
-    if (!message.trim()) return
+    if (!message.trim()) return;
 
-    setIsLoading(true)
-    setError(null)
+    const validation = validateMessage(message);
+    if (!validation.isValid) {
+      setError(validation.message || 'メッセージが無効です。');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
 
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message, conversationId }),
-      })
+      });
 
-      if (!response.ok) {
-        throw new Error('ネットワークエラーが発生しました')
-      }
+      const data = await response.json();
 
-      const data = await response.json()
-      console.log('API Response:', data);
-
-      if (data.error) {
-        throw new Error(data.error)
+      if (!response.ok || data.error) {
+        throw new Error(data.error || 'APIエラーが発生しました');
       }
 
       setConversation(prev => [
-        ...prev, 
-        { role: 'user', content: message }, 
+        ...prev,
+        { role: 'user', content: message },
         { role: 'assistant', content: data.response }
-      ])
-      setConversationId(data.conversationId)
-      setMessage('')
+      ]);
+      setConversationId(data.conversationId);
+      setMessage('');
     } catch (err) {
       if (err instanceof Error) {
-        setError(err.message)
+        setError(err.message);
       } else {
-        setError('不明なエラーが発生しました')
+        setError('予期せぬエラーが発生しました。しばらく時間をおいてから再度お試しください。');
       }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleSuggestionClick = (message: string) => {
     setMessage(message)
