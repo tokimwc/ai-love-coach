@@ -72,14 +72,21 @@ export default function Chat() {
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ message, conversationId }),
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTPエラー: ${response.status}`);
+      }
 
-      if (!response.ok || data.error) {
-        throw new Error(data.error || 'APIエラーが発生しました');
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
       }
 
       setConversation(prev => [
@@ -89,7 +96,9 @@ export default function Chat() {
       ]);
       setConversationId(data.conversationId);
       setMessage('');
+
     } catch (err) {
+      console.error('チャットエラー:', err);
       if (err instanceof Error) {
         setError(err.message);
       } else {

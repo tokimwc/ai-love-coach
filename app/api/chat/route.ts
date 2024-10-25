@@ -20,6 +20,10 @@ const LOVE_COACH_PROMPT = `
 ユーザーの質問や悩みに対して、上記の指針を踏まえながら回答してください。
 `
 
+export const runtime = 'edge' // エッジランタイムを使用
+
+export const maxDuration = 300 // タイムアウトを300秒に設定
+
 export async function POST(request: Request) {
   const cookieStore = cookies()
   const supabase = createClient(cookieStore)
